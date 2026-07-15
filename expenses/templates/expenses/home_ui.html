@@ -1,0 +1,487 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Expense Tracker APIs</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #ffffff;
+      color: #111111;
+      font-family: 'Georgia', 'Times New Roman', serif;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    /* ─── STATUS BAR ─── */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      flex-wrap: wrap;
+      padding: 10px 48px;
+      border-bottom: 1px solid #E5E5E3;
+    }
+    .s-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-family: 'Courier New', monospace;
+      font-size: 11.5px;
+      color: #888884;
+    }
+    .s-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ─── HERO ─── */
+    .hero {
+      text-align: center;
+      padding: 80px 32px 56px;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+    .hero h1 {
+      font-family: 'Georgia', serif;
+      font-size: clamp(2.5rem, 6vw, 4rem);
+      font-weight: 700;
+      color: #111111;
+      letter-spacing: -1.5px;
+      line-height: 1.08;
+      margin-bottom: 22px;
+    }
+    .hero p {
+      font-family: 'Courier New', monospace;
+      font-size: 13.5px;
+      color: #888884;
+      line-height: 1.85;
+      max-width: 480px;
+      margin: 0 auto 36px;
+    }
+
+    /* ─── DIVIDER STATUS ROW ─── */
+    .status-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 32px;
+      flex-wrap: wrap;
+      padding-bottom: 56px;
+    }
+    .sr-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-family: 'Courier New', monospace;
+      font-size: 11.5px;
+      color: #AAAAAA;
+      text-decoration: line-through;
+      text-decoration-color: #CCCCCA;
+    }
+    .sr-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ─── PAGE CONTENT ─── */
+    .page {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 0 48px 80px;
+    }
+
+    /* ─── SECTION LABEL ─── */
+    .sec-label {
+      font-family: 'Courier New', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #AAAAAA;
+      margin-bottom: 18px;
+    }
+
+    /* ─── OVERVIEW GRID ─── */
+    /* 3 cards on top row, 1 on bottom — matching screenshot */
+    .ov-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-rows: auto auto;
+      border: 1px solid #E5E5E3;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 52px;
+    }
+    .ov-card {
+      padding: 28px 30px 24px;
+      border-right: 1px solid #E5E5E3;
+      border-bottom: 1px solid #E5E5E3;
+    }
+    /* last card in top row — no right border */
+    .ov-card:nth-child(3) { border-right: none; }
+    /* bottom card spans full width — no bottom border */
+    .ov-card.wide {
+      grid-column: 1 / -1;
+      border-right: none;
+      border-bottom: none;
+    }
+    .ov-lbl {
+      font-family: 'Courier New', monospace;
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #AAAAAA;
+      margin-bottom: 12px;
+    }
+    .ov-val {
+      font-family: 'Georgia', serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #111111;
+      letter-spacing: -1px;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .ov-val.med { font-size: 1.9rem; letter-spacing: -0.5px; }
+    .ov-sub {
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      color: #AAAAAA;
+      line-height: 1.6;
+    }
+
+    /* ─── AUTHENTICATION ─── */
+    .auth-block {
+      border: 1px solid #E5E5E3;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 52px;
+    }
+    .auth-token {
+      padding: 16px 22px;
+      border-bottom: 1px solid #E5E5E3;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      color: #555550;
+      background: #FFFFFF;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .auth-token .tk { color: #111111; font-weight: 700; }
+    .auth-token .tv { color: #AAAAAA; letter-spacing: 0.02em; }
+    .auth-note {
+      padding: 15px 22px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      color: #888884;
+      background: #FAFAF8;
+      line-height: 1.75;
+    }
+    .auth-note a { color: #444; }
+
+    /* ─── ENDPOINTS ─── */
+    .ep-block {
+      border: 1px solid #E5E5E3;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 52px;
+    }
+    .ep-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 22px;
+      border-bottom: 1px solid #E5E5E3;
+      background: #fff;
+      transition: background 0.1s;
+    }
+    .ep-row:last-child { border-bottom: none; }
+    .ep-row:hover { background: #FAFAF8; }
+    .badge {
+      font-family: 'Courier New', monospace;
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 4px;
+      min-width: 56px;
+      text-align: center;
+      flex-shrink: 0;
+      letter-spacing: 0.05em;
+    }
+    .b-get    { background:#EFF6FF; color:#1D4ED8; border:1px solid #BFDBFE; }
+    .b-post   { background:#F0FDF4; color:#15803D; border:1px solid #BBF7D0; }
+    .b-put    { background:#FFFBEB; color:#B45309; border:1px solid #FDE68A; }
+    .b-patch  { background:#F5F3FF; color:#6D28D9; border:1px solid #DDD6FE; }
+    .b-delete { background:#FEF2F2; color:#B91C1C; border:1px solid #FECACA; }
+    .ep-path {
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      color: #111111;
+      flex: 1;
+    }
+    .ep-desc {
+      font-family: 'Courier New', monospace;
+      font-size: 11.5px;
+      color: #AAAAAA;
+      text-align: right;
+    }
+
+    /* ─── INFO ROWS (Pagination, Webhooks) ─── */
+    .info-block {
+      border: 1px solid #E5E5E3;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 52px;
+    }
+    .info-row {
+      display: flex;
+      gap: 20px;
+      padding: 16px 22px;
+      border-bottom: 1px solid #E5E5E3;
+      align-items: flex-start;
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-k {
+      font-family: 'Courier New', monospace;
+      font-size: 11.5px;
+      color: #AAAAAA;
+      min-width: 110px;
+      flex-shrink: 0;
+      padding-top: 1px;
+    }
+    .info-v {
+      font-family: 'Courier New', monospace;
+      font-size: 12.5px;
+      color: #333330;
+      line-height: 1.65;
+    }
+    .tag {
+      display: inline-block;
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      background: #F5F5F3;
+      border: 1px solid #E5E5E3;
+      padding: 1px 7px;
+      border-radius: 4px;
+      color: #333330;
+      margin: 2px 2px 2px 0;
+    }
+
+    /* ─── RESPONSE CODES ─── */
+    .resp-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      border: 1px solid #E5E5E3;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 52px;
+    }
+    .resp-cell {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 18px 20px;
+      border-right: 1px solid #E5E5E3;
+      border-bottom: 1px solid #E5E5E3;
+      background: #fff;
+    }
+    .r-code {
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .r-title {
+      font-family: 'Courier New', monospace;
+      font-size: 12.5px;
+      color: #111111;
+      margin-bottom: 2px;
+    }
+    .r-sub {
+      font-family: 'Courier New', monospace;
+      font-size: 10.5px;
+      color: #AAAAAA;
+    }
+
+    /* ─── FOOTER ─── */
+    footer {
+      border-top: 1px solid #E5E5E3;
+      padding: 18px 48px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    footer p, footer a {
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      color: #AAAAAA;
+      text-decoration: none;
+    }
+    footer a:hover { color: #555; }
+    footer div { display: flex; gap: 20px; }
+
+    @media (max-width: 640px) {
+      .page { padding: 0 20px 60px; }
+      .status-bar { padding: 10px 20px; }
+      footer { padding: 16px 20px; }
+      .ep-desc { display: none; }
+      .ov-grid { grid-template-columns: 1fr 1fr; }
+      .ov-card:nth-child(3) { border-right: 1px solid #E5E5E3; }
+      .ov-card:nth-child(2) { border-right: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- STATUS BAR -->
+  <div class="status-bar">
+    <div class="s-item">
+      <div class="s-dot" style="background:#16A34A;"></div>
+      All systems operational
+    </div>
+    <div class="s-item">
+      <div class="s-dot" style="background:#2563EB;"></div>
+      Base URL: api.expensetracker.io/v2
+    </div>
+    <div class="s-item">
+      <div class="s-dot" style="background:#D97706;"></div>
+      99.9% uptime
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero">
+    <h1>Expense Tracker APIs</h1>
+    <p>A RESTful API to manage expenses, categories, budgets, and reports. Build financial apps with clean, predictable endpoints.</p>
+
+    <!-- strikethrough status row exactly like screenshot -->
+    <div class="status-row">
+      <div class="sr-item">
+        <div class="sr-dot" style="background:#AAAAAA;"></div>
+        All systems operational
+      </div>
+      <div class="sr-item">
+        <div class="sr-dot" style="background:#AAAAAA;"></div>
+        Base URL: api.expensetracker.io/v2
+      </div>
+      <div class="sr-item">
+        <div class="sr-dot" style="background:#AAAAAA;"></div>
+        99.9% uptime
+      </div>
+    </div>
+  </div>
+
+  <div class="page">
+
+    <!-- OVERVIEW -->
+    <div class="sec-label">Overview</div>
+    <div class="ov-grid">
+
+      <!-- Row 1: 3 cards -->
+      <div class="ov-card">
+        <div class="ov-lbl">Endpoints</div>
+        <div class="ov-val">9</div>
+        <div class="ov-sub">Across 2 resources</div>
+      </div>
+
+      <div class="ov-card">
+        <div class="ov-lbl">Rate Limit</div>
+        <div class="ov-val">1,000</div>
+        <div class="ov-sub">Requests / hour</div>
+      </div>
+
+      <div class="ov-card">
+        <div class="ov-lbl">Auth</div>
+        <div class="ov-val med">Bearer</div>
+        <div class="ov-sub">JWT token, 24h TTL</div>
+      </div>
+
+      <!-- Row 2: 1 wide card -->
+      <div class="ov-card wide">
+        <div class="ov-lbl">Response</div>
+        <div class="ov-val med">JSON</div>
+        <div class="ov-sub">UTF-8, ISO dates</div>
+      </div>
+
+    </div>
+
+    <!-- EXPENSES -->
+    <div class="sec-label">Expenses</div>
+    <div class="ep-block">
+      <div class="ep-row"><span class="badge b-get">GET</span><span class="ep-path">api/expense/list/</span><span class="ep-desc">List all expenses (paginated)</span></div>
+      <div class="ep-row"><span class="badge b-post">POST</span><span class="ep-path">api/expense/create/</span><span class="ep-desc">Create a new expense</span></div>
+      <div class="ep-row"><span class="badge b-get">GET</span><span class="ep-path">/expenses/{id}</span><span class="ep-desc">Fetch a single expense</span></div>
+      <div class="ep-row"><span class="badge b-put">PUT</span><span class="ep-path">/expenses/{id}</span><span class="ep-desc">Replace an expense</span></div>
+      <div class="ep-row"><span class="badge b-patch">PATCH</span><span class="ep-path">/expenses/{id}</span><span class="ep-desc">Partially update</span></div>
+      <div class="ep-row"><span class="badge b-delete">POST</span><span class="ep-path">api/expense/delete/</span><span class="ep-desc">Delete an expense</span></div>
+      <div class="ep-row"><span class="badge b-get">GET</span><span class="ep-path">/expenses/summary</span><span class="ep-desc">Monthly totals &amp; averages</span></div>
+    </div>
+
+   
+   
+
+    
+
+    
+
+    <!-- RESPONSE CODES -->
+    <div class="sec-label">Response codes</div>
+    <div class="resp-grid">
+      <div class="resp-cell">
+        <div class="r-code" style="color:#16A34A;">200</div>
+        <div><div class="r-title">OK</div><div class="r-sub">Request succeeded</div></div>
+      </div>
+      <div class="resp-cell">
+        <div class="r-code" style="color:#16A34A;">201</div>
+        <div><div class="r-title">Created</div><div class="r-sub">Resource created</div></div>
+      </div>
+      <div class="resp-cell">
+        <div class="r-code" style="color:#16A34A;">204</div>
+        <div><div class="r-title">No Content</div><div class="r-sub">Deleted successfully</div></div>
+      </div>
+      <div class="resp-cell">
+        <div class="r-code" style="color:#D97706;">400</div>
+        <div><div class="r-title">Bad Request</div><div class="r-sub">Validation failed</div></div>
+      </div>
+      <div class="resp-cell">
+        <div class="r-code" style="color:#D97706;">401</div>
+        <div><div class="r-title">Unauthorized</div><div class="r-sub">Invalid or missing token</div></div>
+      </div>
+      <div class="resp-cell">
+        <div class="r-code" style="color:#D97706;">404</div>
+        <div><div class="r-title">Not Found</div><div class="r-sub">Resource doesn't exist</div></div>
+      </div>
+      <div class="resp-cell">
+        <div class="r-code" style="color:#DC2626;">429</div>
+        <div><div class="r-title">Too Many Requests</div><div class="r-sub">Rate limit exceeded</div></div>
+      </div>
+      <div class="resp-cell">
+        <div class="r-code" style="color:#DC2626;">500</div>
+        <div><div class="r-title">Server Error</div><div class="r-sub">Something went wrong</div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    <p>&copy; 2026 Expense Tracker API · v2.1.0</p>
+    <div>
+      <a href="#">Docs</a>
+      <a href="#">Status</a>
+      <a href="#">Changelog</a>
+      <a href="#">Support</a>
+    </div>
+  </footer>
+
+</body>
+</html>

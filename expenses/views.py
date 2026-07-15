@@ -1,4 +1,4 @@
-
+from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.status import HTTP_201_CREATED,HTTP_200_OK
@@ -10,6 +10,9 @@ from dotenv import load_dotenv
 import os
 from google import genai
 load_dotenv()
+
+def home_ui(request):
+    return render(request,"expenses/home_ui.html")
 
 class ExpenseCreateAPI(APIView):
     permission_classes = [IsAuthenticated]

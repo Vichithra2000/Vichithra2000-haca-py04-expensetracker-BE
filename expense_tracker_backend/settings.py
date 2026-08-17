@@ -139,9 +139,7 @@ CORS_ALLOWED_ORIGINS = [
     "https://haca-py04-expensetracker.netlify.app"
 ]
 
-CSRF_TRUSTED_ORIGINS = [
-    "https://haca-py04-expensetracker.netlify.app",
-]
+
  
 CORS_ALLOW_HEADERS = [
     'authorization',
